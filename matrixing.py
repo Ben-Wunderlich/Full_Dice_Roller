@@ -1,15 +1,12 @@
 # function based full dice roller with statistics
-import random
+from random import randint
 #ask Bette if there is anything else I am messing up on
-print("welcome to the dice roller 2018, an example roll is 2d4 + 3d6 - 4\n")
 
-minimum_val = 0 # these are for statistics
-max_val = 0
+print("welcome to dice roller 2018, an example roll is 2d4 + 3d6 - 4\n")
 
 
-def xdx_eval(given_str, sign):
+def xdx_eval(given_str, sign, get_the_avg, minimum_val2, max_val2):
     try:
-        global minimum_val, max_val
         total_val = 0
         split_index = given_str.index("d")
         num_of_dies = int(given_str[:split_index])
@@ -19,20 +16,20 @@ def xdx_eval(given_str, sign):
         else:
             print("\nrolling {} {} sided die...".format(num_of_dies, die_val))
         for _ in range(num_of_dies):  # number of times to roll the dice
-            if get_avg:
+            if get_the_avg:  # only used when getting statistics
                 if sign:
-                    minimum_val += 1
-                    max_val += die_val
+                    minimum_val2 += 1
+                    max_val2 += die_val
                 else:
-                    minimum_val -= die_val
-                    max_val -= 1
-            current_roll = random.randint(1, die_val)  # most important line
+                    minimum_val2 -= die_val
+                    max_val2 -= 1
+            current_roll = randint(1, die_val)  # most important line
             if current_roll == die_val:
                 print("You got the maximum roll of {0}!".format(current_roll))
             else:
                 print("You rolled a {1} out of {0}".format(die_val, current_roll))
             total_val += current_roll
-        return total_val
+        return total_val, minimum_val2, max_val2
     except ValueError:
         print("That input was not valid, try again using notation like 2d8-3d5+5")
 
@@ -66,19 +63,14 @@ def operator_index(strong):  # gets the index of the next required split
         return len(strong)
 
 
-repeat_saver = ""
-get_avg = False
-
-
-def string_sorter(die_choose):
-    global minimum_val, max_val, get_avg
-    grand_tot = 0
+def string_sorter(die_choose, get_average):
+    grand_tot = max_val = minimum_val = 0  # resets all the values
     grp_amt = die_choose.count("+")
     neg_amt = die_choose.count("-")
-    for i in range(grp_amt + neg_amt + 1): # +1 for if it is just a number
+    for i in range(grp_amt + neg_amt + 1):  # +1 for if it is just a number
         if die_choose. replace(" ", "") == "":
             break
-        front_sign = sign_pls(die_choose[0])
+        front_sign = sign_pls(die_choose[0])  # checks if is + or -
         if not die_choose[0].isnumeric():
             die_choose = die_choose[1:]  # gets rid of +- at start of  string
         next_indx = operator_index(die_choose)
@@ -86,38 +78,58 @@ def string_sorter(die_choose):
         if front_sign:
             is_negative = 1
             print("+" + die_choose[:next_indx])
+        else:
+            print("-" + die_choose[:next_indx])
         if die_choose[:next_indx].isdecimal():  # if the next thing is a number
-            if front_sign:
-                print("+"+die_choose[:next_indx])
-            else:
-                print("-" + die_choose[:next_indx])
             grand_tot += int(die_choose[:next_indx]) * is_negative
             minimum_val += int(die_choose[:next_indx]) * is_negative
             max_val += int(die_choose[:next_indx]) * is_negative
-        else:
+        else:  # if the next thing is not just a number
             try:
-                grand_tot += xdx_eval(die_choose[:next_indx], front_sign)*is_negative
+                add_amount = xdx_eval(die_choose[:next_indx], front_sign, get_average, minimum_val, max_val)
+                grand_tot += add_amount[0] * is_negative
+                if get_average:
+                    minimum_val += add_amount[1]
+                    max_val += add_amount[2]
             except TypeError:
                 print()
                 return
-        die_choose = die_choose[next_indx:]
+        die_choose = die_choose[next_indx:]  # takes off part that was just used
 
-    if get_avg:
-        print("\nthe maximum possible roll for {} is:".format(repeat_saver), max_val)
-        print("the minimum roll is:", minimum_val)
-        print("the average roll is:", (max_val + minimum_val)/2)
-    print("\nyour total roll is:", grand_tot, "\n")
-    # return grand_tot # is for being part of bigger system of files
+    if get_average:
+        return grand_tot, minimum_val, max_val
+    else:
+        return grand_tot
+
+
+def average_calculator(last_string):
+    if last_string != "":
+        display_result(string_sorter(last_string, True), last_string)
+    else:
+        print("you need to put in a calculation before finding its average\n")
+
+
+def display_result(result, roll):
+    # is this the best way to check type? other people said to use isinstance()
+    if type(result) == tuple:  # is it better to use multi return or global
+        print("\nthe maximum possible roll for {} is:".format(roll), result[2])
+        print("the minimum roll is:", result[1])
+        print("the average roll is:", (result[2] + result[1]) / 2)
+        print("\nyour total roll is:", result[0], "\n")
+    else:
+        print("\nyour total roll is:", result, "\n")
+    return
 
 
 def main():
-    global minimum_val, max_val, get_avg, repeat_saver
-    while True:  # is there a better thing to put this as?
+    repeat_saver = ""
+    input_die = ""
+    while "quit" not in input_die:  # IS THERE A BETTER THING TO PUT THIS AS?
         input_die = input("enter the number and type of dice you would like "
             "to roll, type 'quit' to quit, hit enter to redo the last roll "
             "or 'avg' to see the probability of your last roll \n")
         if "quit" in input_die:
-            return
+            continue
         input_die.replace(" ", "")
         if input_die == "":
             input_die = repeat_saver
@@ -126,19 +138,11 @@ def main():
                 continue
             print("redoing", repeat_saver)
 
-        if "avg" in input_die:
-            if repeat_saver != "":
-                get_avg = True
-                minimum_val = max_val = 0
-                string_sorter(repeat_saver)
-                continue
-            else:
-                print("you need to put in a calculation before finding its average\n")
-                continue
-        else:
-            get_avg = False
+        if "avg" in input_die:  # add chance of the roll happening
+            average_calculator(repeat_saver)
+            continue
         repeat_saver = input_die
-        string_sorter(input_die)
+        display_result(string_sorter(input_die, False), repeat_saver)
 
 
 main()
