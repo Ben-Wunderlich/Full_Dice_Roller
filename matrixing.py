@@ -1,12 +1,10 @@
 # function based full dice roller with statistics
 from random import randint
-#ask Bette if there is anything else I am messing up on
-
-print("welcome to dice roller 2018, an example roll is 2d4 + 3d6 - 4\n")
 
 
 def xdx_eval(given_str, sign, get_the_avg, minimum_val2, max_val2):
     try:
+        print(given_str)
         total_val = 0
         split_index = given_str.index("d")
         num_of_dies = int(given_str[:split_index])
@@ -63,10 +61,20 @@ def operator_index(strong):  # gets the index of the next required split
         return len(strong)
 
 
+def number_check(string):
+    try:
+        int(string)
+    except:
+        return False
+    return True
+
+
 def string_sorter(die_choose, get_average):
+    die_choose.replace(" ", "")
     grand_tot = max_val = minimum_val = 0  # resets all the values
     grp_amt = die_choose.count("+")
     neg_amt = die_choose.count("-")
+
     for i in range(grp_amt + neg_amt + 1):  # +1 for if it is just a number
         if die_choose. replace(" ", "") == "":
             break
@@ -74,13 +82,12 @@ def string_sorter(die_choose, get_average):
         if not die_choose[0].isnumeric():
             die_choose = die_choose[1:]  # gets rid of +- at start of  string
         next_indx = operator_index(die_choose)
-        is_negative = -1
+        is_negative = 1 if front_sign else -1
         if front_sign:
-            is_negative = 1
             print("+" + die_choose[:next_indx])
         else:
             print("-" + die_choose[:next_indx])
-        if die_choose[:next_indx].isdecimal():  # if the next thing is a number
+        if number_check(die_choose[:next_indx]):  # if the next thing is a number
             grand_tot += int(die_choose[:next_indx]) * is_negative
             minimum_val += int(die_choose[:next_indx]) * is_negative
             max_val += int(die_choose[:next_indx]) * is_negative
@@ -110,8 +117,7 @@ def average_calculator(last_string):
 
 
 def display_result(result, roll):
-    # is this the best way to check type? other people said to use isinstance()
-    if type(result) == tuple:  # is it better to use multi return or global
+    if type(result) == tuple:
         print("\nthe maximum possible roll for {} is:".format(roll), result[2])
         print("the minimum roll is:", result[1])
         print("the average roll is:", (result[2] + result[1]) / 2)
@@ -124,7 +130,7 @@ def display_result(result, roll):
 def main():
     repeat_saver = ""
     input_die = ""
-    while "quit" not in input_die:  # IS THERE A BETTER THING TO PUT THIS AS?
+    while "quit" not in input_die:
         input_die = input("enter the number and type of dice you would like "
             "to roll, type 'quit' to quit, hit enter to redo the last roll "
             "or 'avg' to see the probability of your last roll \n")
@@ -145,4 +151,6 @@ def main():
         display_result(string_sorter(input_die, False), repeat_saver)
 
 
-main()
+if __name__ == "__main__":
+    print("welcome to dice roller 2018, an example roll is 2d4 + 3d6 - 4\n")
+    main()
